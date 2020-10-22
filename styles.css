@@ -16,6 +16,7 @@ header {
 }
 
 footer {
+	display: inline-block;
 	font-style: italic;
 	font-size: 90%;
 	width: 33%;
