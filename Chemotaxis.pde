@@ -1,3 +1,27 @@
+double clamp(double x, double bottom, double top) {
+  if (x < bottom) {
+    return bottom;
+  }
+  else if (x > top) {
+    return top;
+  }
+  else {
+    return x;
+  }
+}
+
+int get_rand_int(int bottom, int top) {
+  return bottom + (int)(Math.random() * (top - bottom));
+}
+
+double get_rand_range(double bottom, double top) {
+  return bottom + Math.random() * (top - bottom);
+}
+
+color get_rand_color() {
+  return color(get_rand_int(0, 256), get_rand_int(0, 256), get_rand_int(0, 256));
+}
+
 class Vector2D {
   double x;
   double y;
@@ -65,14 +89,18 @@ class Bird {
   Flock flock;
   Vector2D location;
   Vector2D velocity;
+  color bird_color;
+  Vector2D drift;
   
   Bird(Flock i_flock, Vector2D i_location, Vector2D i_velocity) {
     flock = i_flock;
     location = i_location;
     velocity = i_velocity;
+    bird_color = get_rand_color();
+    drift = new Vector2D(0, 0);
   }
   
-  void update(double time_delta) {
+  void move(double time_delta) {
     Vector2D towards_center_force
       = flock.bird_set.get_average_location().minus(location).normalize().multiply(10);
     Vector2D vec_to_goal = flock.goal.minus(location);
@@ -89,18 +117,24 @@ class Bird {
       repulsion_force.update_by(location.minus(adjacent_bird.location).normalize());
     }
     repulsion_force = repulsion_force.normalize().multiply(6);
+    Vector2D random_force = drift;
+    
+    drift.update_by(new Vector2D(get_rand_range(-0.3, 0.3), get_rand_range(-0.3, 0.3)));
+    drift.x = clamp(drift.x, -2, 2);
+    drift.y = clamp(drift.y, -2, 2);
     
     Vector2D total_force
       = towards_center_force.multiply(1.0/6)
-        .plus(towards_goal_force.multiply(5.0/12))
-        .plus(repulsion_force.multiply(5.0/12));
+        .plus(towards_goal_force.multiply(5.0/18))
+        .plus(repulsion_force.multiply(5.0/18))
+        .plus(random_force.multiply(5.0/18));
     total_force = total_force.multiply(force_factor * time_delta / mass);
     
     velocity.update_by(total_force);
   }
   
   void show() {
-    fill(color(0x00, 0x00, 0xff));
+    fill(bird_color);
     stroke(color(0xff, 0xff, 0xff));
     strokeWeight(1);
     ellipseMode(RADIUS);
@@ -248,7 +282,7 @@ class Flock {
     }
     bird_set.reindex();
     for (Bird bird : birds) {
-      bird.update(time_delta);
+      bird.move(time_delta);
     }
   }
 }
